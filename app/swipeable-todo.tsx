@@ -12,7 +12,9 @@ type Props = {
 
 export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props) {
   const startX = useRef(0);
+  const startY = useRef(0);
   const currentX = useRef(0);
+  const locked = useRef<"horizontal" | "vertical" | null>(null);
   const [offset, setOffset] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const [exiting, setExiting] = useState(false);
@@ -20,25 +22,39 @@ export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props
 
   function onTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
     currentX.current = 0;
+    locked.current = null;
     setSwiping(true);
   }
 
   function onTouchMove(e: React.TouchEvent) {
-    const diff = e.touches[0].clientX - startX.current;
-    const clamped = Math.min(0, diff);
+    const dx = e.touches[0].clientX - startX.current;
+    const dy = e.touches[0].clientY - startY.current;
+
+    if (!locked.current) {
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        locked.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      }
+      return;
+    }
+
+    if (locked.current === "vertical") return;
+
+    const clamped = Math.min(0, dx);
     currentX.current = clamped;
     setOffset(clamped);
   }
 
   function onTouchEnd() {
     setSwiping(false);
-    if (currentX.current < -threshold) {
+    if (locked.current === "horizontal" && currentX.current < -threshold) {
       setExiting(true);
       setTimeout(() => onDelete(id), 250);
     } else {
       setOffset(0);
     }
+    locked.current = null;
   }
 
   return (
@@ -56,8 +72,7 @@ export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        onClick={() => onToggle(id)}
-        className="relative flex cursor-pointer select-none items-center gap-3 py-3 px-3"
+        className="relative flex select-none items-center gap-3 py-3 px-3"
         style={{
           background: "#ffffff",
           transform: `translateX(${offset}px)`,
@@ -66,7 +81,8 @@ export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props
       >
         {/* Checkbox */}
         <div
-          className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+          onClick={() => onToggle(id)}
+          className="flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-150"
           style={{
             border: completed ? "none" : "1.5px solid var(--fg-secondary)",
             background: completed ? "var(--fg)" : "transparent",
