@@ -3,6 +3,28 @@
 :root {
   --background: #f9fafb;
   --foreground: #111827;
+  --bg: #f9fafb;
+  --fg: #111827;
+  --fg-secondary: #9ca3af;
+  --fg-done: #9ca3af;
+  --danger: #ef4444;
+}
+
+@keyframes todo-enter-anim {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes todo-exit-anim {
+  to { opacity: 0; transform: translateX(-100%); height: 0; padding: 0; overflow: hidden; }
+}
+
+.todo-enter {
+  animation: todo-enter-anim 0.2s ease-out;
+}
+
+.todo-exit {
+  animation: todo-exit-anim 0.25s ease-in forwards;
 }
 
 @theme inline {

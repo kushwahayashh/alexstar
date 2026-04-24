@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { IconArrowUp } from "@tabler/icons-react";
+import { SwipeableTodo } from "./swipeable-todo";
 
 type Todo = { id: number; text: string; completed: boolean };
 
@@ -52,25 +54,29 @@ export function TodoList() {
   }
 
   if (loading) {
-    return <p className="py-8 text-center text-gray-400">Loading...</p>;
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-600" />
+      </div>
+    );
   }
 
   return (
     <>
-      <form onSubmit={handleAdd} className="flex gap-2">
+      <form onSubmit={handleAdd} className="relative">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="What needs to be done?"
           autoComplete="off"
-          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-gray-800 placeholder-gray-400 shadow-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+          className="w-full bg-gray-100 px-4 py-2.5 pr-12 text-sm text-gray-800 placeholder-gray-400 outline-none focus:bg-gray-200"
         />
         <button
           type="submit"
-          className="rounded-xl bg-emerald-500 px-5 py-3 text-base font-medium text-white shadow-sm transition-colors hover:bg-emerald-600 active:bg-emerald-700"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-600 transition-colors hover:text-blue-600"
         >
-          Add
+          <IconArrowUp size={18} />
         </button>
       </form>
 
@@ -79,45 +85,18 @@ export function TodoList() {
           <p className="py-8 text-center text-gray-400">No todos yet. Add one above!</p>
         ) : (
           todos.map((todo) => (
-            <div
+            <SwipeableTodo
               key={todo.id}
-              className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm border border-gray-100"
-            >
-              <button
-                onClick={() => handleToggle(todo.id)}
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                  todo.completed
-                    ? "border-emerald-500 bg-emerald-500 text-white"
-                    : "border-gray-300 hover:border-emerald-400"
-                }`}
-              >
-                {todo.completed && (
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </button>
-
-              <span className={`flex-1 text-base ${todo.completed ? "text-gray-400 line-through" : "text-gray-800"}`}>
-                {todo.text}
-              </span>
-
-              <button
-                onClick={() => handleDelete(todo.id)}
-                className="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+              id={todo.id}
+              text={todo.text}
+              completed={todo.completed}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
+            />
           ))
         )}
       </div>
 
-      <p className="mt-8 text-center text-xs text-gray-400">
-        {todos.length} todo{todos.length !== 1 && "s"}
-      </p>
     </>
   );
 }
