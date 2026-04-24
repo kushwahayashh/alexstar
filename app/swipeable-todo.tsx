@@ -66,7 +66,7 @@ export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props
       >
         {/* Checkbox */}
         <div
-          className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md transition-colors duration-150"
+          className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full transition-colors duration-150"
           style={{
             border: completed ? "none" : "1.5px solid var(--fg-secondary)",
             background: completed ? "var(--fg)" : "transparent",
