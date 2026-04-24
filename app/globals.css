@@ -10,51 +10,63 @@
   --danger: #ef4444;
 }
 
+/* ── New todo slides in ─────────────────────────── */
 @keyframes todo-enter-anim {
-  0% { opacity: 0; transform: translateY(18px) scale(0.985); }
-  65% { opacity: 1; transform: translateY(-2px) scale(1.01); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes todo-collapse-anim {
-  0% { opacity: 1; max-height: 72px; transform: scaleY(1); }
-  100% { opacity: 0; max-height: 0; transform: scaleY(0.96); }
-}
-
-@keyframes checkbox-settle {
-  0% { transform: scale(1); }
-  35% { transform: scale(0.86); }
-  72% { transform: scale(1.06); }
-  100% { transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .todo-enter {
-  animation: todo-enter-anim 0.46s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: todo-enter-anim 0.3s cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+/* ── Collapse after delete ──────────────────────── */
+@keyframes todo-collapse-anim {
+  from {
+    max-height: 64px;
+    margin-bottom: 8px;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    margin-bottom: 0;
+    opacity: 0;
+  }
 }
 
 .todo-collapse {
-  animation: todo-collapse-anim 0.26s cubic-bezier(0.32, 0, 0.67, 0) forwards;
+  animation: todo-collapse-anim 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
   overflow: hidden;
-  transform-origin: top center;
+  pointer-events: none;
 }
 
-.checkbox-settle {
-  animation: checkbox-settle 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* ── Checkbox tap ───────────────────────────────── */
+@keyframes checkbox-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.78); }
+  100% { transform: scale(1); }
 }
 
-.todo-shell {
-  transform-origin: top center;
-  will-change: opacity, max-height, transform;
+.checkbox-pop {
+  animation: checkbox-pop 0.25s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+/* ── Swipe card ─────────────────────────────────── */
 .todo-card {
   will-change: transform;
 }
 
+/* ── Reduced motion ─────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .todo-enter,
   .todo-collapse,
-  .checkbox-settle {
+  .checkbox-pop {
     animation: none;
   }
 

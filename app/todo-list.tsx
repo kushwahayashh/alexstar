@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { IconArrowUp } from "@tabler/icons-react";
 import { SwipeableTodo } from "./swipeable-todo";
 
-type Todo = { id: number; text: string; completed: boolean; _key?: number };
+type Todo = { id: number; text: string; completed: boolean; _key?: number; _new?: boolean };
 
 export function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -39,7 +39,7 @@ export function TodoList() {
     setInput("");
 
     const tempId = Date.now();
-    setTodos((prev) => [{ id: tempId, text, completed: false, _key: tempId }, ...prev]);
+    setTodos((prev) => [{ id: tempId, text, completed: false, _key: tempId, _new: true }, ...prev]);
 
     const res = await fetch("/api/todos", {
       method: "POST",
@@ -99,6 +99,7 @@ export function TodoList() {
               id={todo.id}
               text={todo.text}
               completed={todo.completed}
+              isNew={todo._new}
               onToggle={handleToggle}
               onDelete={handleDelete}
             />

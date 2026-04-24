@@ -6,140 +6,120 @@ type Props = {
   id: number;
   text: string;
   completed: boolean;
+  isNew?: boolean;
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
 };
 
-export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props) {
-  const itemRef = useRef<HTMLDivElement>(null);
+const THRESHOLD = 80;
+const DAMPING = 0.55;
+
+export function SwipeableTodo({ id, text, completed, isNew, onToggle, onDelete }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
   const startY = useRef(0);
-  const currentX = useRef(0);
-  const locked = useRef<"horizontal" | "vertical" | null>(null);
-  const dismissTimer = useRef<number | null>(null);
-  const deleteTimer = useRef<number | null>(null);
+  const axis = useRef<"x" | "y" | null>(null);
+
   const [offset, setOffset] = useState(0);
-  const [swiping, setSwiping] = useState(false);
-  const [dismissing, setDismissing] = useState(false);
-  const [collapsing, setCollapsing] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "dismissing" | "collapsing">("idle");
   const [settling, setSettling] = useState(false);
-  const threshold = 92;
-  const dismissDuration = 320;
-  const collapseDuration = 240;
 
   useEffect(() => {
-    return () => {
-      if (dismissTimer.current) {
-        window.clearTimeout(dismissTimer.current);
-      }
+    if (phase !== "dismissing") return;
+    const t = setTimeout(() => setPhase("collapsing"), 280);
+    return () => clearTimeout(t);
+  }, [phase]);
 
-      if (deleteTimer.current) {
-        window.clearTimeout(deleteTimer.current);
-      }
-    };
-  }, []);
+  useEffect(() => {
+    if (phase !== "collapsing") return;
+    const t = setTimeout(() => onDelete(id), 220);
+    return () => clearTimeout(t);
+  }, [phase, id, onDelete]);
 
-  function getDragOffset(dx: number) {
-    const leftOnly = Math.min(0, dx);
-    const distance = Math.abs(leftOnly);
-
-    if (distance <= threshold) {
-      return leftOnly * 0.92;
-    }
-
-    const overflow = distance - threshold;
-    const softened = threshold * 0.92 + overflow * 0.32;
-    return -Math.min(softened, 176);
+  function clampDrag(dx: number) {
+    const clamped = Math.min(0, dx);
+    const abs = Math.abs(clamped);
+    if (abs <= THRESHOLD) return clamped;
+    const over = abs - THRESHOLD;
+    return -(THRESHOLD + over * DAMPING);
   }
 
   function onTouchStart(e: React.TouchEvent) {
-    if (dismissing || collapsing) return;
-
+    if (phase !== "idle") return;
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
-    currentX.current = offset;
-    locked.current = null;
-    setSwiping(true);
+    axis.current = null;
+    setDragging(true);
   }
 
   function onTouchMove(e: React.TouchEvent) {
-    if (dismissing || collapsing) return;
-
+    if (phase !== "idle") return;
     const dx = e.touches[0].clientX - startX.current;
     const dy = e.touches[0].clientY - startY.current;
 
-    if (!locked.current && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-      locked.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+    if (!axis.current && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      axis.current = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
     }
 
-    if (locked.current === "vertical") return;
-    if (locked.current !== "horizontal") return;
-
-    const nextOffset = getDragOffset(dx);
-    currentX.current = nextOffset;
-    setOffset(nextOffset);
+    if (axis.current !== "x") return;
+    setOffset(clampDrag(dx));
   }
 
   function onTouchEnd() {
-    if (dismissing || collapsing) return;
+    if (phase !== "idle") return;
+    setDragging(false);
 
-    setSwiping(false);
-
-    if (locked.current === "horizontal" && currentX.current < -threshold) {
-      const itemWidth = itemRef.current?.offsetWidth ?? 320;
-      const dismissOffset = -(itemWidth + 56);
-
-      setDismissing(true);
-      currentX.current = dismissOffset;
-      setOffset(dismissOffset);
-
-      dismissTimer.current = window.setTimeout(() => {
-        setCollapsing(true);
-      }, dismissDuration - 36);
-
-      deleteTimer.current = window.setTimeout(() => {
-        onDelete(id);
-      }, dismissDuration + collapseDuration - 28);
+    if (axis.current === "x" && Math.abs(offset) >= THRESHOLD) {
+      const width = cardRef.current?.offsetWidth ?? 320;
+      setOffset(-(width + 40));
+      setPhase("dismissing");
     } else {
-      currentX.current = 0;
       setOffset(0);
     }
-
-    locked.current = null;
+    axis.current = null;
   }
 
-  const dragProgress = Math.min(1, Math.abs(offset) / threshold);
-  const backdropOpacity = dragProgress === 0 ? 0 : 0.14 + dragProgress * 0.86;
-  const labelOpacity = dragProgress === 0 ? 0 : 0.24 + dragProgress * 0.76;
+  const progress = Math.min(1, Math.abs(offset) / THRESHOLD);
+  const pastThreshold = Math.abs(offset) >= THRESHOLD;
+
+  const shellClass = [
+    "relative overflow-hidden",
+    phase === "collapsing" ? "todo-collapse" : isNew ? "todo-enter" : "",
+  ].join(" ");
+
+  const cardTransition = dragging
+    ? "none"
+    : phase === "dismissing"
+      ? "transform 0.28s cubic-bezier(0.4, 0, 1, 1)"
+      : "transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)";
 
   return (
-    <div className={`todo-shell relative overflow-hidden ${collapsing ? "todo-collapse" : "todo-enter"}`}>
-      {/* Red backdrop */}
+    <div className={shellClass}>
+      {/* Delete backdrop */}
       <div
         className="absolute inset-0 flex items-center justify-end pr-4"
         style={{
           background: "var(--danger)",
-          opacity: backdropOpacity,
-          transform: `scale(${1 - (1 - dragProgress) * 0.012})`,
-          transition: swiping ? "none" : "opacity 240ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1)",
+          opacity: progress * progress,
+          transition: dragging ? "none" : "opacity 0.2s ease",
         }}
       >
         <span
-          className="text-xs font-medium uppercase text-white"
+          className="text-xs font-medium uppercase tracking-widest text-white"
           style={{
-            letterSpacing: "0.14em",
-            opacity: labelOpacity,
-            transform: `translateX(${(1 - dragProgress) * 10}px) scale(${0.96 + dragProgress * 0.04})`,
-            transition: swiping ? "none" : "opacity 240ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1)",
+            opacity: progress > 0.3 ? 1 : 0,
+            transform: `translateX(${(1 - progress) * 8}px)`,
+            transition: dragging ? "none" : "opacity 0.15s ease, transform 0.2s ease",
           }}
         >
-          Delete
+          {pastThreshold ? "Release" : "Delete"}
         </span>
       </div>
 
-      {/* Item */}
+      {/* Card */}
       <div
-        ref={itemRef}
+        ref={cardRef}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -149,11 +129,7 @@ export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props
           background: "#ffffff",
           transform: `translateX(${offset}px)`,
           touchAction: "pan-y",
-          transition: swiping
-            ? "none"
-            : dismissing
-              ? "transform 320ms cubic-bezier(0.22, 1, 0.36, 1)"
-              : "transform 460ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+          transition: cardTransition,
         }}
       >
         {/* Checkbox */}
@@ -163,7 +139,7 @@ export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props
             onToggle(id);
           }}
           onAnimationEnd={() => setSettling(false)}
-          className={`flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-200 ${settling ? "checkbox-settle" : ""}`}
+          className={`flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-150 ${settling ? "checkbox-pop" : ""}`}
           style={{
             border: completed ? "none" : "1.5px solid var(--fg-secondary)",
             background: completed ? "var(--fg)" : "transparent",
