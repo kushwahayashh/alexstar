@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { IconArrowUp } from "@tabler/icons-react";
 import { SwipeableTodo } from "./swipeable-todo";
 
@@ -11,16 +11,25 @@ export function TodoList() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const fetchTodos = useCallback(async () => {
-    const res = await fetch("/api/todos");
-    const data = await res.json();
-    setTodos(data);
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
+    let cancelled = false;
+
+    async function fetchTodos() {
+      const res = await fetch("/api/todos");
+      const data = await res.json();
+
+      if (!cancelled) {
+        setTodos(data);
+        setLoading(false);
+      }
+    }
+
+    void fetchTodos();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();

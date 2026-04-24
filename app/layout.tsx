@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Space_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const spaceMono = Space_Mono({
-  weight: ["400", "700"],
+const jetBrainsMono = JetBrains_Mono({
+  weight: ["700"],
   subsets: ["latin"],
-  variable: "--font-space-mono",
+  variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -19,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${spaceMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-mono">{children}</body>
+    <html lang="en" className={`${jetBrainsMono.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col font-mono font-bold">{children}</body>
     </html>
   );
 }

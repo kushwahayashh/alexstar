@@ -18,6 +18,7 @@ export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props
   const [offset, setOffset] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [popping, setPopping] = useState(false);
   const threshold = 80;
 
   function onTouchStart(e: React.TouchEvent) {
@@ -76,13 +77,17 @@ export function SwipeableTodo({ id, text, completed, onToggle, onDelete }: Props
         style={{
           background: "#ffffff",
           transform: `translateX(${offset}px)`,
-          transition: swiping ? "none" : "transform 0.2s ease-out",
+          transition: swiping ? "none" : "transform 0.35s cubic-bezier(0.34, 1.3, 0.64, 1)",
         }}
       >
         {/* Checkbox */}
         <div
-          onClick={() => onToggle(id)}
-          className="flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-150"
+          onClick={() => {
+            setPopping(true);
+            onToggle(id);
+          }}
+          onAnimationEnd={() => setPopping(false)}
+          className={`flex h-[18px] w-[18px] shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-150 ${popping ? "checkbox-pop" : ""}`}
           style={{
             border: completed ? "none" : "1.5px solid var(--fg-secondary)",
             background: completed ? "var(--fg)" : "transparent",
