@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { IconArrowUp } from "@tabler/icons-react";
 import { SwipeableTodo } from "./swipeable-todo";
 
-type Todo = { id: number; text: string; completed: boolean };
+type Todo = { id: number; text: string; completed: boolean; _key?: number };
 
 export function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -30,7 +30,7 @@ export function TodoList() {
     setInput("");
 
     const tempId = Date.now();
-    setTodos((prev) => [{ id: tempId, text, completed: false }, ...prev]);
+    setTodos((prev) => [{ id: tempId, text, completed: false, _key: tempId }, ...prev]);
 
     const res = await fetch("/api/todos", {
       method: "POST",
@@ -38,7 +38,7 @@ export function TodoList() {
       body: JSON.stringify({ text }),
     });
     const created = await res.json();
-    setTodos((prev) => prev.map((t) => (t.id === tempId ? created : t)));
+    setTodos((prev) => prev.map((t) => (t.id === tempId ? { ...created, _key: t._key } : t)));
   }
 
   async function handleToggle(id: number) {
@@ -86,7 +86,7 @@ export function TodoList() {
         ) : (
           todos.map((todo) => (
             <SwipeableTodo
-              key={todo.id}
+              key={todo._key ?? todo.id}
               id={todo.id}
               text={todo.text}
               completed={todo.completed}
