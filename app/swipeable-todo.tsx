@@ -84,7 +84,7 @@ export function SwipeableTodo({ id, text, completed, isNew, onToggle, onDelete }
   const pastThreshold = Math.abs(offset) >= THRESHOLD;
 
   const shellClass = [
-    "relative overflow-hidden rounded-lg",
+    "relative overflow-hidden",
     phase === "collapsing" ? "todo-collapse" : isNew ? "todo-enter" : "",
   ].join(" ");
 
@@ -98,7 +98,7 @@ export function SwipeableTodo({ id, text, completed, isNew, onToggle, onDelete }
     <div className={shellClass}>
       {/* Delete backdrop */}
       <div
-        className="absolute inset-0 flex items-center justify-end rounded-lg pr-4"
+        className="absolute inset-0 flex items-center justify-end pr-4"
         style={{
           background: "var(--danger)",
           opacity: progress * progress,
